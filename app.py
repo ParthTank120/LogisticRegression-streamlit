@@ -8,7 +8,7 @@ from sklearn.model_selection import train_test_split
 st.title("Titanic Survival Prediction App")
 
 # Load dataset
-data = pd.read_csv("titanic.csv")
+data = pd.read_csv("Titanic-Dataset.csv")
 
 # Data preprocessing
 data = data[['Pclass', 'Sex', 'Age', 'SibSp', 'Parch', 'Fare', 'Survived']]
