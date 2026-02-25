@@ -1,29 +1,54 @@
 import streamlit as st
 import pandas as pd
 import numpy as np
-from sklearn.linear_model import LogisticRegression
+import seaborn as sns
+import matplotlib.pyplot as plt
 from sklearn.model_selection import train_test_split
+from sklearn.linear_model import LogisticRegression
+from sklearn.metrics import accuracy_score, confusion_matrix
 
-# Title
-st.title("Titanic Survival Prediction App")
+# ---------------- TITLE ----------------
+st.title("🚢 Titanic Survival Prediction with Confusion Matrix")
 
-# Load dataset
-data = pd.read_csv("Titanic-Dataset.csv")
+# ---------------- LOAD DATA ----------------
+data = sns.load_dataset("titanic")
 
-# Data preprocessing
-data = data[['Pclass', 'Sex', 'Age', 'SibSp', 'Parch', 'Fare', 'Survived']]
-data['Age'].fillna(data['Age'].mean(), inplace=True)
-data['Sex'] = data['Sex'].map({'male': 0, 'female': 1})
+data = data[['pclass', 'sex', 'age', 'sibsp', 'parch', 'fare', 'survived']]
+data['age'].fillna(data['age'].mean(), inplace=True)
+data['sex'] = data['sex'].map({'male': 0, 'female': 1})
 
-# Features and target
-X = data.drop('Survived', axis=1)
-y = data['Survived']
+X = data.drop('survived', axis=1)
+y = data['survived']
 
-# Train model
-model = LogisticRegression()
-model.fit(X, y)
+# ---------------- TRAIN TEST SPLIT ----------------
+X_train, X_test, y_train, y_test = train_test_split(
+    X, y, test_size=0.2, random_state=42
+)
 
-# User Inputs
+# ---------------- MODEL ----------------
+model = LogisticRegression(max_iter=1000)
+model.fit(X_train, y_train)
+
+y_pred = model.predict(X_test)
+accuracy = accuracy_score(y_test, y_pred)
+
+st.write("### Model Accuracy:", round(accuracy * 100, 2), "%")
+
+# ---------------- CONFUSION MATRIX ----------------
+st.subheader("Confusion Matrix")
+
+cm = confusion_matrix(y_test, y_pred)
+
+fig, ax = plt.subplots()
+sns.heatmap(cm, annot=True, fmt="d", cmap="Blues",
+            xticklabels=["Not Survived", "Survived"],
+            yticklabels=["Not Survived", "Survived"])
+plt.xlabel("Predicted")
+plt.ylabel("Actual")
+
+st.pyplot(fig)
+
+# ---------------- USER INPUT ----------------
 st.header("Enter Passenger Details")
 
 pclass = st.selectbox("Passenger Class", [1, 2, 3])
@@ -33,16 +58,14 @@ sibsp = st.number_input("Siblings/Spouses aboard", 0, 8, 0)
 parch = st.number_input("Parents/Children aboard", 0, 6, 0)
 fare = st.number_input("Fare", 0.0, 500.0, 50.0)
 
-# Convert inputs
 sex = 0 if sex == "male" else 1
 
-input_data = np.array([[pclass, sex, age, sibsp, parch, fare]])
+if st.button("Predict Survival"):
 
-# Prediction
-if st.button("Predict"):
+    input_data = np.array([[pclass, sex, age, sibsp, parch, fare]])
     prediction = model.predict(input_data)
 
     if prediction[0] == 1:
-        st.success("The passenger is likely to Survive ✅")
+        st.success("✅ The passenger is likely to SURVIVE")
     else:
-        st.error("The passenger is Not likely to Survive ❌")
+        st.error("❌ The passenger is NOT likely to survive")
